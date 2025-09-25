@@ -7,12 +7,46 @@
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#1976d2" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- External CSS -->
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Sidebar layout */
+    body {
+      margin:0;
+      display:flex;
+      height:100vh;
+      font-family:"Inter", sans-serif;
+    }
+    #sidebar {
+      width:250px;
+      background:#f4f4f4;
+      border-right:1px solid #ddd;
+      display:flex;
+      flex-direction:column;
+      padding:12px;
+      box-sizing:border-box;
+    }
+    #sidebar h2 {
+      margin:0 0 12px 0;
+      font-size:18px;
+      color:#1976d2;
+    }
+    #map {
+      flex:1;
+    }
+  </style>
 </head>
 <body>
-  <input id="uploadBtn" type="file" accept="image/*">
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <h2>Hazard Map</h2>
+    <label for="uploadBtn">Upload floorplan:</label>
+    <input id="uploadBtn" type="file" accept="image/*">
+  </div>
+
+  <!-- Map -->
   <div id="map"></div>
+
+  <!-- Floating add button -->
   <div class="fab" id="addBtn">+</div>
 
   <!-- Shape + color picker modal -->
@@ -175,7 +209,3 @@
   </script>
 </body>
 </html>
-
-
-
-

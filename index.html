@@ -4,10 +4,15 @@
   <meta charset="utf-8" />
   <title>Hazard Map</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+
+  <!-- PWA manifest -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#ff9800" />
+
+  <!-- Styles -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="style.css" />
+
   <style>
     .section-title { margin-top: 16px; margin-bottom: 8px; font-weight: 600; color:#ff9800; }
     .row { display:flex; gap:8px; align-items:center; }
@@ -21,6 +26,15 @@
     .btn-sm { padding:6px 8px; border:none; border-radius:8px; background:#ff9800; color:#000; cursor:pointer; font-size:12px; }
     .btn-sm:hover { background:#e68900; }
   </style>
+
+  <!-- Register Service Worker -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js")
+        .then(() => console.log("Service worker registered"))
+        .catch(err => console.error("SW registration failed:", err));
+    }
+  </script>
 </head>
 <body>
   <!-- Sidebar -->
@@ -335,3 +349,4 @@
   </script>
 </body>
 </html>
+

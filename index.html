@@ -18,7 +18,7 @@
     .list { max-height: 40vh; overflow:auto; margin-top:8px; }
     .item { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 8px; border-radius:8px; background:#2a2a2a; margin-bottom:6px; }
     .item-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-    .btn-sm { padding:6px 8px; border:none; border-radius:8px; background:#ff9800; color:#000; cursor:pointer; }
+    .btn-sm { padding:6px 8px; border:none; border-radius:8px; background:#ff9800; color:#000; cursor:pointer; font-size:12px; }
     .btn-sm:hover { background:#e68900; }
   </style>
 </head>
@@ -94,11 +94,19 @@
     fitAndShowImage(base64);
   }
 
+  // FIX: Clear markers when a new floorplan is uploaded
   document.getElementById('uploadBtn').addEventListener('change',e=>{
     const f = e.target.files?.[0];
     if (!f) return;
     const reader = new FileReader();
-    reader.onload = ev => loadImageBase64(ev.target.result);
+    reader.onload = ev => {
+      const base64 = ev.target.result;
+      localStorage.setItem("floorplan", base64);
+      fitAndShowImage(base64);
+      // Clear existing hazards
+      markers.clearLayers();
+      localStorage.setItem("hazards", JSON.stringify([]));
+    };
     reader.readAsDataURL(f);
   });
 
@@ -181,6 +189,7 @@
     });
   }
 
+  // Close picker if clicking outside
   window.addEventListener("click",(e)=>{
     const picker=document.getElementById("picker");
     if(picker.style.display==="flex" && !picker.contains(e.target) && !e.target.closest("#addBtn")){

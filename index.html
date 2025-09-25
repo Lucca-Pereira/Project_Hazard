@@ -27,6 +27,31 @@
     }
     textarea { width:100%; min-height:60px; }
     button { margin-top:6px; }
+
+    /* Picker modal */
+    #picker {
+      position:fixed; top:0; left:0; right:0; bottom:0;
+      background:rgba(0,0,0,0.6);
+      display:none; align-items:center; justify-content:center;
+      z-index:2000;
+    }
+    #picker .box {
+      background:#fff; padding:20px; border-radius:8px;
+      display:flex; flex-direction:column; gap:15px;
+    }
+    .shape-row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+    .marker-preview {
+      width:40px; height:40px; cursor:pointer;
+    }
+    .circle { border-radius:50%; }
+    .square { }
+    .triangle {
+      width: 0; height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-bottom: 35px solid red; /* color will be set inline */
+      background:none !important;
+    }
   </style>
 </head>
 <body>
@@ -34,29 +59,78 @@
   <div id="map"></div>
   <div class="fab" id="addBtn">+</div>
 
+  <!-- Shape + color picker modal -->
+  <div id="picker">
+    <div class="box">
+      <div>Select a hazard style:</div>
+      <div class="shape-row" id="options"></div>
+    </div>
+  </div>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
   const map = L.map('map',{ crs:L.CRS.Simple, zoomControl:false, minZoom:-5 });
   let imageLayer, imageW=2000, imageH=1500;
   const markers = L.featureGroup().addTo(map);
 
-  function loadImage(fileOrUrl){
+  const colors = ["red","orange","yellow","green","blue","purple"];
+  const shapes = ["circle","square","triangle"];
+
+  // --- IMAGE LOADING ---
+  function loadImage(src){
     const img=new Image();
     img.onload=()=>{
       imageW=img.width; imageH=img.height;
       if(imageLayer) map.removeLayer(imageLayer);
       const bounds=[[0,0],[imageH,imageW]];
-      imageLayer=L.imageOverlay(img.src,bounds).addTo(map);
+      imageLayer=L.imageOverlay(src,bounds).addTo(map);
       map.setMaxBounds(bounds); map.fitBounds(bounds);
     };
-    if(typeof fileOrUrl==="string"){ img.src=fileOrUrl; }
-    else { img.src=URL.createObjectURL(fileOrUrl); }
+    img.src=src;
   }
 
   document.getElementById('uploadBtn').addEventListener('change',e=>{
-    if(e.target.files[0]) loadImage(e.target.files[0]);
+    if(e.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const base64 = ev.target.result;
+        localStorage.setItem("floorplan", base64);
+        loadImage(base64);
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    }
   });
 
+  // --- PERSISTENCE ---
+  function saveHazards() {
+    const arr = [];
+    markers.eachLayer(m => {
+      const ll = m.getLatLng();
+      arr.push({
+        note: m.hazardData.note,
+        x: ll.lng,
+        y: ll.lat,
+        color: m.hazardData.color,
+        shape: m.hazardData.shape
+      });
+    });
+    localStorage.setItem("hazards", JSON.stringify(arr));
+  }
+
+  function loadHazards() {
+    const data = localStorage.getItem("hazards");
+    if (!data) return;
+    try {
+      const arr = JSON.parse(data);
+      arr.forEach(h => {
+        createMarker([h.y, h.x], h.color, h.shape, h.note);
+      });
+    } catch(e) {
+      console.error("Failed to load hazards", e);
+    }
+  }
+
+  // --- MARKERS ---
   function markerPopup(marker){
     const data=marker.hazardData||{note:''};
     const div=document.createElement('div');
@@ -65,26 +139,79 @@
       <div><button id="save">Save</button>
       <button id="del">Delete</button></div>`;
     div.querySelector('#save').onclick=()=>{
-      marker.hazardData={note:div.querySelector('#note').value};
+      marker.hazardData.note=div.querySelector('#note').value;
+      saveHazards();
       marker.closePopup();
     };
-    div.querySelector('#del').onclick=()=>{ markers.removeLayer(marker); };
+    div.querySelector('#del').onclick=()=>{
+      markers.removeLayer(marker);
+      saveHazards();
+    };
     return div;
   }
 
-  function addMarker(latlng){
-    const m=L.marker(latlng,{draggable:true}).addTo(markers);
-    m.hazardData={note:''};
+  function createMarker(latlng, color="red", shape="circle", note="") {
+    let html="";
+    if(shape==="circle") {
+      html = `<div style="background:${color}; width:20px; height:20px; border-radius:50%; border:2px solid #333;"></div>`;
+    } else if(shape==="square") {
+      html = `<div style="background:${color}; width:20px; height:20px; border:2px solid #333;"></div>`;
+    } else if(shape==="triangle") {
+      html = `<div style="width:0; height:0; border-left:10px solid transparent; border-right:10px solid transparent; border-bottom:20px solid ${color};"></div>`;
+    }
+
+    const icon = L.divIcon({
+      className: "custom-marker",
+      html: html,
+      iconSize:[20,20],
+      iconAnchor:[10,10]
+    });
+
+    const m=L.marker(latlng,{draggable:true, icon}).addTo(markers);
+    m.hazardData={note, color, shape};
     m.bindPopup(()=>markerPopup(m));
-    m.openPopup();
+    m.on("dragend", () => saveHazards());
+    saveHazards();
+    return m;
   }
 
+  // --- ADD MARKER WORKFLOW ---
   document.getElementById('addBtn').onclick=()=>{
-    map.once('click',e=>addMarker(e.latlng));
-    alert('Tap where you want to add a hazard');
+    buildPicker();
+    document.getElementById("picker").style.display="flex";
   };
 
-  // Register service worker
+  function buildPicker(){
+    const container=document.getElementById("options");
+    container.innerHTML="";
+    shapes.forEach(shape=>{
+      colors.forEach(color=>{
+        let html="";
+        if(shape==="circle"){
+          html=`<div class="marker-preview circle" style="background:${color};"></div>`;
+        } else if(shape==="square"){
+          html=`<div class="marker-preview square" style="background:${color};"></div>`;
+        } else if(shape==="triangle"){
+          html=`<div class="marker-preview triangle" style="border-bottom-color:${color};"></div>`;
+        }
+        const el=document.createElement("div");
+        el.innerHTML=html;
+        const choice=el.firstChild;
+        choice.onclick=()=>{
+          document.getElementById("picker").style.display="none";
+          map.once('click',e=>createMarker(e.latlng, color, shape, ""));
+          alert("Tap where you want to add a hazard");
+        };
+        container.appendChild(choice);
+      });
+    });
+  }
+
+  // --- INIT ---
+  const savedPlan = localStorage.getItem("floorplan");
+  if (savedPlan) loadImage(savedPlan);
+  loadHazards();
+
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js');
   }

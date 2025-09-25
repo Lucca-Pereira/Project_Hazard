@@ -24,8 +24,11 @@ body {
   transition: left 0.3s ease;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;   /* hide horizontal overflow */
+  overflow-y: auto;     /* scroll if sidebar too tall */
 }
 #sidebar.open { left: 0; }
+
 #sidebar h2 {
   margin:0 0 12px 0;
   font-size:18px;
@@ -34,7 +37,7 @@ body {
 
 /* Upload button inside sidebar */
 #uploadLabel {
-  margin-top: 30px;
+  margin-top: 10px;
   font-size: 14px;
   color:#e0e0e0;
 }
@@ -51,6 +54,61 @@ body {
   box-shadow:0 2px 5px rgba(0,0,0,.3);
 }
 #uploadBtn:hover { background:#e68900; }
+
+/* Project name input + save button smaller */
+#projectName {
+  font-size: 12px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border:1px solid #444;
+  background:#2a2a2a;
+  color:#e0e0e0;
+}
+#saveProjectBtn {
+  font-size: 12px;
+  padding: 4px 6px;
+  border:none;
+  border-radius:6px;
+  background:#ff9800;
+  color:black;
+  cursor:pointer;
+}
+#saveProjectBtn:hover { background:#e68900; }
+
+/* Project list items */
+.item {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:6px 8px;
+  border-radius:8px;
+  background:#2a2a2a;
+  margin-bottom:6px;
+}
+.item-name {
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.btn-sm {
+  padding:6px 8px;
+  border:none;
+  border-radius:8px;
+  background:#ff9800;
+  color:#000;
+  cursor:pointer;
+  font-size:12px;
+}
+.btn-sm:hover { background:#e68900; }
+
+/* Section titles inside sidebar */
+.section-title {
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color:#ff9800;
+}
 
 /* Menu button (bottom-left) */
 #menuBtn {

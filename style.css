@@ -1,11 +1,14 @@
 body {
   margin:0;
   font-family: "Inter", sans-serif;
-  background:#1a1a1a; /* dark background for map area */
+  background:#1a1a1a; /* dark background always */
   color:#e0e0e0;
 }
 
-#map { height:100vh; }
+#map {
+  height:100vh;
+  background:#1a1a1a; /* ensure map area stays dark gray */
+}
 
 /* Sidebar */
 #sidebar {
@@ -13,7 +16,7 @@ body {
   top: 0; left: -260px;
   width: 250px;
   height: 100%;
-  background: #3a3a3a; /* lighter gray than background */
+  background: #3a3a3a; /* lighter gray sidebar */
   border-right: 1px solid #444;
   padding: 12px;
   box-sizing: border-box;
@@ -49,17 +52,7 @@ body {
 }
 #uploadBtn:hover { background:#e68900; }
 
-/* Overlay */
-#overlay {
-  position: fixed;
-  top:0; left:0; right:0; bottom:0;
-  background: rgba(0,0,0,0.4);
-  z-index: 2500;
-  display: none;
-}
-#overlay.show { display:block; }
-
-/* Menu button (moved bottom-left) */
+/* Menu button (bottom-left) */
 #menuBtn {
   position: absolute;
   bottom: 20px; left: 20px;
@@ -79,7 +72,7 @@ body {
 }
 #menuBtn:hover { background:#e68900; }
 
-/* Floating action button */
+/* Floating action button (bottom-right) */
 .fab {
   position: absolute;
   bottom:20px; right:20px;

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Hazard Map</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1976d2" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html,body,#map { height:100%; margin:0; padding:0; }
+    .leaflet-control-zoom { display:none; }
+    .fab {
+      position: absolute;
+      bottom: 20px; right: 20px;
+      width: 56px; height: 56px;
+      background:#1976d2; color:#fff;
+      border-radius: 50%; display:flex; align-items:center; justify-content:center;
+      font-size:28px; box-shadow:0 3px 6px rgba(0,0,0,.3);
+      cursor:pointer; user-select:none;
+      z-index:1000;
+    }
+    #uploadBtn {
+      position:absolute; top:10px; left:10px; z-index:1000;
+      background:#fff; padding:6px; border-radius:6px;
+      box-shadow:0 2px 5px rgba(0,0,0,.2);
+    }
+    textarea { width:100%; min-height:60px; }
+    button { margin-top:6px; }
+  </style>
+</head>
+<body>
+  <input id="uploadBtn" type="file" accept="image/*">
+  <div id="map"></div>
+  <div class="fab" id="addBtn">+</div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+  const map = L.map('map',{ crs:L.CRS.Simple, zoomControl:false, minZoom:-5 });
+  let imageLayer, imageW=2000, imageH=1500;
+  const markers = L.featureGroup().addTo(map);
+
+  function loadImage(fileOrUrl){
+    const img=new Image();
+    img.onload=()=>{
+      imageW=img.width; imageH=img.height;
+      if(imageLayer) map.removeLayer(imageLayer);
+      const bounds=[[0,0],[imageH,imageW]];
+      imageLayer=L.imageOverlay(img.src,bounds).addTo(map);
+      map.setMaxBounds(bounds); map.fitBounds(bounds);
+    };
+    if(typeof fileOrUrl==="string"){ img.src=fileOrUrl; }
+    else { img.src=URL.createObjectURL(fileOrUrl); }
+  }
+
+  document.getElementById('uploadBtn').addEventListener('change',e=>{
+    if(e.target.files[0]) loadImage(e.target.files[0]);
+  });
+
+  function markerPopup(marker){
+    const data=marker.hazardData||{note:''};
+    const div=document.createElement('div');
+    div.innerHTML=`
+      <textarea id="note">${data.note||''}</textarea>
+      <div><button id="save">Save</button>
+      <button id="del">Delete</button></div>`;
+    div.querySelector('#save').onclick=()=>{
+      marker.hazardData={note:div.querySelector('#note').value};
+      marker.closePopup();
+    };
+    div.querySelector('#del').onclick=()=>{ markers.removeLayer(marker); };
+    return div;
+  }
+
+  function addMarker(latlng){
+    const m=L.marker(latlng,{draggable:true}).addTo(markers);
+    m.hazardData={note:''};
+    m.bindPopup(()=>markerPopup(m));
+    m.openPopup();
+  }
+
+  document.getElementById('addBtn').onclick=()=>{
+    map.once('click',e=>addMarker(e.latlng));
+    alert('Tap where you want to add a hazard');
+  };
+
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js');
+  }
+  </script>
+</body>
+</html>

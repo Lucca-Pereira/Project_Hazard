@@ -17,9 +17,6 @@
     <input id="uploadBtn" type="file" accept="image/*">
   </div>
 
-  <!-- Overlay -->
-  <div id="overlay"></div>
-
   <!-- Menu button -->
   <button id="menuBtn">☰</button>
 
@@ -48,21 +45,10 @@
 
   // --- SIDEBAR TOGGLE ---
   const sidebar=document.getElementById("sidebar");
-  const overlay=document.getElementById("overlay");
   const menuBtn=document.getElementById("menuBtn");
 
   menuBtn.onclick=()=>{
-    if(sidebar.classList.contains("open")){
-      sidebar.classList.remove("open");
-      overlay.classList.remove("show");
-    } else {
-      sidebar.classList.add("open");
-      overlay.classList.add("show");
-    }
-  };
-  overlay.onclick=()=>{
-    sidebar.classList.remove("open");
-    overlay.classList.remove("show");
+    sidebar.classList.toggle("open");
   };
 
   // --- IMAGE LOADING ---

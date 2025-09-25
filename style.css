@@ -1,12 +1,80 @@
 body {
   margin:0;
   font-family: "Inter", sans-serif;
-  background:#1a1a1a; /* dark gray background */
+  background:#1a1a1a; /* dark background for map area */
   color:#e0e0e0;
 }
 
 #map { height:100vh; }
 
+/* Sidebar */
+#sidebar {
+  position: fixed;
+  top: 0; left: -260px;
+  width: 250px;
+  height: 100%;
+  background: #3a3a3a; /* lighter gray than background */
+  border-right: 1px solid #444;
+  padding: 12px;
+  box-sizing: border-box;
+  z-index: 3000;
+  transition: left 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+#sidebar.open { left: 0; }
+#sidebar h2 {
+  margin:0 0 12px 0;
+  font-size:18px;
+  color:#ff9800;
+}
+
+/* Upload button inside sidebar */
+#uploadLabel {
+  margin-top: 30px;
+  font-size: 14px;
+  color:#e0e0e0;
+}
+#uploadBtn {
+  margin-top: 8px;
+  padding:6px 10px;
+  border-radius:8px;
+  background:#ff9800;
+  border:none;
+  color:black;
+  cursor:pointer;
+  font-family:"Inter", sans-serif;
+  font-size:14px;
+  box-shadow:0 2px 5px rgba(0,0,0,.3);
+}
+#uploadBtn:hover { background:#e68900; }
+
+/* Overlay */
+#overlay {
+  position: fixed;
+  top:0; left:0; right:0; bottom:0;
+  background: rgba(0,0,0,0.4);
+  z-index: 2500;
+  display: none;
+}
+#overlay.show { display:block; }
+
+/* Menu button */
+#menuBtn {
+  position: absolute;
+  top: 15px; left: 15px;
+  z-index: 3100;
+  background: #ff9800;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+
+/* Floating action button */
 .fab {
   position: absolute;
   bottom:20px; right:20px;
@@ -24,11 +92,12 @@ body {
 }
 .fab:hover { transform: scale(1.1); background:#e68900; }
 
+/* Text areas in popups */
 textarea {
   width:100%;
   min-height:60px;
   border:1px solid #444;
-  border-radius:6px;
+  border-radius:8px;
   padding:6px;
   font-size:14px;
   font-family:"Inter", sans-serif;
@@ -36,20 +105,20 @@ textarea {
   color:#e0e0e0;
 }
 
+/* Buttons in popups */
 button {
   margin-top:6px;
   border:none;
   padding:6px 12px;
-  border-radius:6px;
+  border-radius:8px;
   background:#ff9800;
   color:black;
   font-family:"Inter", sans-serif;
   cursor:pointer;
 }
-button:hover {
-  background:#e68900;
-}
+button:hover { background:#e68900; }
 
+/* Popup styling */
 .popup {
   font-family:"Inter", sans-serif;
   padding:10px;
@@ -59,6 +128,7 @@ button:hover {
   color:#e0e0e0;
 }
 
+/* Picker modal */
 #picker {
   position:fixed;
   top:0; left:0; right:0; bottom:0;
@@ -95,6 +165,6 @@ button:hover {
   height: 0;
   border-left: 20px solid transparent;
   border-right: 20px solid transparent;
-  border-bottom: 35px solid red; /* color will be set inline */
+  border-bottom: 35px solid red;
   background:none !important;
 }

@@ -176,7 +176,6 @@
         choice.onclick=()=>{
           document.getElementById("picker").style.display="none";
           map.once('click',e=>createMarker(e.latlng, color, shape, ""));
-          alert("Tap where you want to add a hazard");
         };
         container.appendChild(choice);
       });

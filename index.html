@@ -1,220 +1,106 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>Hazard Map</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#1976d2" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>
-    html,body,#map { height:100%; margin:0; padding:0; }
-    .leaflet-control-zoom { display:none; }
-    .fab {
-      position: absolute;
-      bottom: 20px; right: 20px;
-      width: 56px; height: 56px;
-      background:#1976d2; color:#fff;
-      border-radius: 50%; display:flex; align-items:center; justify-content:center;
-      font-size:28px; box-shadow:0 3px 6px rgba(0,0,0,.3);
-      cursor:pointer; user-select:none;
-      z-index:1000;
-    }
-    #uploadBtn {
-      position:absolute; top:10px; left:10px; z-index:1000;
-      background:#fff; padding:6px; border-radius:6px;
-      box-shadow:0 2px 5px rgba(0,0,0,.2);
-    }
-    textarea { width:100%; min-height:60px; }
-    button { margin-top:6px; }
+body {
+  margin:0;
+  font-family: "Inter", sans-serif;
+  background:#f9f9f9;
+}
 
-    /* Picker modal */
-    #picker {
-      position:fixed; top:0; left:0; right:0; bottom:0;
-      background:rgba(0,0,0,0.6);
-      display:none; align-items:center; justify-content:center;
-      z-index:2000;
-    }
-    #picker .box {
-      background:#fff; padding:20px; border-radius:8px;
-      display:flex; flex-direction:column; gap:15px;
-    }
-    .shape-row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
-    .marker-preview {
-      width:40px; height:40px; cursor:pointer;
-    }
-    .circle { border-radius:50%; }
-    .square { }
-    .triangle {
-      width: 0; height: 0;
-      border-left: 20px solid transparent;
-      border-right: 20px solid transparent;
-      border-bottom: 35px solid red; /* color will be set inline */
-      background:none !important;
-    }
-  </style>
-</head>
-<body>
-  <input id="uploadBtn" type="file" accept="image/*">
-  <div id="map"></div>
-  <div class="fab" id="addBtn">+</div>
+#map { height:100vh; }
 
-  <!-- Shape + color picker modal -->
-  <div id="picker">
-    <div class="box">
-      <div>Select a hazard style:</div>
-      <div class="shape-row" id="options"></div>
-    </div>
-  </div>
+.fab {
+  position: absolute;
+  bottom:20px; right:20px;
+  width:56px; height:56px;
+  border-radius:50%;
+  background:#1976d2;
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:32px;
+  box-shadow:0 4px 10px rgba(0,0,0,.3);
+  transition: transform .2s;
+}
+.fab:hover { transform: scale(1.1); }
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-  const map = L.map('map',{ crs:L.CRS.Simple, zoomControl:false, minZoom:-5 });
-  let imageLayer, imageW=2000, imageH=1500;
-  const markers = L.featureGroup().addTo(map);
+#uploadBtn {
+  position:absolute;
+  top:10px; left:10px;
+  z-index:1000;
+  background:#fff;
+  padding:6px 10px;
+  border-radius:6px;
+  box-shadow:0 2px 5px rgba(0,0,0,.2);
+  font-family:"Inter", sans-serif;
+  border:none;
+}
 
-  const colors = ["red","orange","yellow","green","blue","purple"];
-  const shapes = ["circle","square","triangle"];
+textarea {
+  width:100%;
+  min-height:60px;
+  border:1px solid #ccc;
+  border-radius:6px;
+  padding:6px;
+  font-size:14px;
+  font-family:"Inter", sans-serif;
+}
 
-  // --- IMAGE LOADING ---
-  function loadImage(src){
-    const img=new Image();
-    img.onload=()=>{
-      imageW=img.width; imageH=img.height;
-      if(imageLayer) map.removeLayer(imageLayer);
-      const bounds=[[0,0],[imageH,imageW]];
-      imageLayer=L.imageOverlay(src,bounds).addTo(map);
-      map.setMaxBounds(bounds); map.fitBounds(bounds);
-    };
-    img.src=src;
-  }
+button {
+  margin-top:6px;
+  border:none;
+  padding:6px 12px;
+  border-radius:6px;
+  background:#1976d2;
+  color:white;
+  font-family:"Inter", sans-serif;
+  cursor:pointer;
+}
+button:hover {
+  background:#1256a0;
+}
 
-  document.getElementById('uploadBtn').addEventListener('change',e=>{
-    if(e.target.files[0]) {
-      const reader = new FileReader();
-      reader.onload = function(ev) {
-        const base64 = ev.target.result;
-        localStorage.setItem("floorplan", base64);
-        loadImage(base64);
-      };
-      reader.readAsDataURL(e.target.files[0]);
-    }
-  });
+.popup {
+  font-family:"Inter", sans-serif;
+  padding:10px;
+  border-radius:8px;
+  background:#fff;
+  box-shadow:0 2px 6px rgba(0,0,0,.2);
+}
 
-  // --- PERSISTENCE ---
-  function saveHazards() {
-    const arr = [];
-    markers.eachLayer(m => {
-      const ll = m.getLatLng();
-      arr.push({
-        note: m.hazardData.note,
-        x: ll.lng,
-        y: ll.lat,
-        color: m.hazardData.color,
-        shape: m.hazardData.shape
-      });
-    });
-    localStorage.setItem("hazards", JSON.stringify(arr));
-  }
-
-  function loadHazards() {
-    const data = localStorage.getItem("hazards");
-    if (!data) return;
-    try {
-      const arr = JSON.parse(data);
-      arr.forEach(h => {
-        createMarker([h.y, h.x], h.color, h.shape, h.note);
-      });
-    } catch(e) {
-      console.error("Failed to load hazards", e);
-    }
-  }
-
-  // --- MARKERS ---
-  function markerPopup(marker){
-    const data=marker.hazardData||{note:''};
-    const div=document.createElement('div');
-    div.innerHTML=`
-      <textarea id="note">${data.note||''}</textarea>
-      <div><button id="save">Save</button>
-      <button id="del">Delete</button></div>`;
-    div.querySelector('#save').onclick=()=>{
-      marker.hazardData.note=div.querySelector('#note').value;
-      saveHazards();
-      marker.closePopup();
-    };
-    div.querySelector('#del').onclick=()=>{
-      markers.removeLayer(marker);
-      saveHazards();
-    };
-    return div;
-  }
-
-  function createMarker(latlng, color="red", shape="circle", note="") {
-    let html="";
-    if(shape==="circle") {
-      html = `<div style="background:${color}; width:20px; height:20px; border-radius:50%; border:2px solid #333;"></div>`;
-    } else if(shape==="square") {
-      html = `<div style="background:${color}; width:20px; height:20px; border:2px solid #333;"></div>`;
-    } else if(shape==="triangle") {
-      html = `<div style="width:0; height:0; border-left:10px solid transparent; border-right:10px solid transparent; border-bottom:20px solid ${color};"></div>`;
-    }
-
-    const icon = L.divIcon({
-      className: "custom-marker",
-      html: html,
-      iconSize:[20,20],
-      iconAnchor:[10,10]
-    });
-
-    const m=L.marker(latlng,{draggable:true, icon}).addTo(markers);
-    m.hazardData={note, color, shape};
-    m.bindPopup(()=>markerPopup(m));
-    m.on("dragend", () => saveHazards());
-    saveHazards();
-    return m;
-  }
-
-  // --- ADD MARKER WORKFLOW ---
-  document.getElementById('addBtn').onclick=()=>{
-    buildPicker();
-    document.getElementById("picker").style.display="flex";
-  };
-
-  function buildPicker(){
-    const container=document.getElementById("options");
-    container.innerHTML="";
-    shapes.forEach(shape=>{
-      colors.forEach(color=>{
-        let html="";
-        if(shape==="circle"){
-          html=`<div class="marker-preview circle" style="background:${color};"></div>`;
-        } else if(shape==="square"){
-          html=`<div class="marker-preview square" style="background:${color};"></div>`;
-        } else if(shape==="triangle"){
-          html=`<div class="marker-preview triangle" style="border-bottom-color:${color};"></div>`;
-        }
-        const el=document.createElement("div");
-        el.innerHTML=html;
-        const choice=el.firstChild;
-        choice.onclick=()=>{
-          document.getElementById("picker").style.display="none";
-          map.once('click',e=>createMarker(e.latlng, color, shape, ""));
-          alert("Tap where you want to add a hazard");
-        };
-        container.appendChild(choice);
-      });
-    });
-  }
-
-  // --- INIT ---
-  const savedPlan = localStorage.getItem("floorplan");
-  if (savedPlan) loadImage(savedPlan);
-  loadHazards();
-
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js');
-  }
-  </script>
-</body>
-</html>
+#picker {
+  position:fixed;
+  top:0; left:0; right:0; bottom:0;
+  background:rgba(0,0,0,0.6);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:2000;
+}
+#picker .box {
+  background:#fff;
+  padding:20px;
+  border-radius:8px;
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+}
+.shape-row {
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+.marker-preview {
+  width:40px;
+  height:40px;
+  cursor:pointer;
+}
+.circle { border-radius:50%; }
+.square { }
+.triangle {
+  width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-bottom: 35px solid red; /* color will be set inline */
+  background:none !important;
+}

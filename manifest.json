@@ -1,18 +1,19 @@
 {
   "name": "Hazard Map",
   "short_name": "HazardMap",
-  "start_url": "/index.html",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#1a1a1a",
   "theme_color": "#ff9800",
   "icons": [
     {
-      "src": "icon-192x192.png",
+      "src": "./icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icon-512x512.png",
+      "src": "./icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
